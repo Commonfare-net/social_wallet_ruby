@@ -1,0 +1,4 @@
+# Before running tests, copy this file to `test_env.yml`
+# and fill that file with the appropriate values
+TEST_API_ENDPOINT: http://example.com/wallet/v1
+TEST_API_KEY: your_api_key # not used in this release
