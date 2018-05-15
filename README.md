@@ -71,7 +71,9 @@ Retrieve the list of the transactions of the default account.
 client.transactions(account_id: '').list
 ```
 
-**IMPORTANT**: the format of the response varies according to the backend used (e.g. `faircoin` or `mongo`).
+**IMPORTANT**: the format of the response varies according to the backend used (e.g. `faircoin` or `mongo`). See the [Get](#transactions-get) for details.
+
+<span id="#transactions-get"></span>
 
 #### Get
 
@@ -96,6 +98,7 @@ client.transactions.get transaction_id: 'xqc4cvhr...pCPfju5inCO'
   'from-id'=>'pietro',
   'to-id'=>'aaron',
   'amount'=>10,
+  'amount-text'=>'10.0',
   'transaction-id'=>'xqc4cvhr...pCPfju5inCO',
   'currency'=>'MONGO'
 }

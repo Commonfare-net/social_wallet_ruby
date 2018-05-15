@@ -43,7 +43,7 @@ module SocialWallet
     end
 
     def ___balance(account_id: nil)
-      conn = Faraday.new(url: api_endpoint + '/' + path)
+      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
       response = conn.post do |req|
         req.headers['Content-Type'] = 'application/json'
         request_data['account-id'] = account_id if account_id
@@ -55,7 +55,7 @@ module SocialWallet
     end
 
     def ___label
-      conn = Faraday.new(url: api_endpoint + '/' + path)
+      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
       response = conn.post do |req|
         req.headers['Content-Type'] = 'application/json'
         req.body = MultiJson.dump(request_data)
@@ -66,7 +66,7 @@ module SocialWallet
     end
 
     def ___address(account_id: '')
-      conn = Faraday.new(url: api_endpoint + '/' + path)
+      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
       response = conn.post do |req|
         req.headers['Content-Type'] = 'application/json'
         request_data['account-id'] = account_id
@@ -79,7 +79,7 @@ module SocialWallet
 
     # def move(from_id: nil, to_id: nil, amount: 0, tags: [])
     #   @path_parts << 'move'
-    #   conn = Faraday.new(url: api_endpoint + '/' + path)
+    #   conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
     #   response = conn.post do |req|
     #     req.headers['Content-Type'] = 'application/json'
     #     request_data['from-id'] = (from_id ||= @account_id)
@@ -104,10 +104,11 @@ module SocialWallet
       comment_to:          '',
       tags:                []
     )
-      conn = Faraday.new(url: api_endpoint + '/' + path)
+      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
       response = conn.post do |req|
         req.headers['Content-Type'] = 'application/json'
-        request_data[:amount] = amount
+        # From SWAPI v0.9.3 amount is a String
+        request_data[:amount] = BigDecimal.new(amount, 16).to_s('F')
         request_data[:tags] = tags
         # TODO: find a better way to handle this
         if @path_parts.include? 'withdraws'
@@ -131,7 +132,7 @@ module SocialWallet
     end
 
     def ___list
-      conn = Faraday.new(url: api_endpoint + '/' + path)
+      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
       response = conn.post do |req|
         req.headers['Content-Type'] = 'application/json'
         request_data['account-id'] = @account_id if @path_parts.include?('transactions')
@@ -143,7 +144,7 @@ module SocialWallet
     end
 
     def ___get(transaction_id: nil)
-      conn = Faraday.new(url: api_endpoint + '/' + path)
+      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
       response = conn.post do |req|
         req.headers['Content-Type'] = 'application/json'
         request_data[:txid] = transaction_id
@@ -155,7 +156,7 @@ module SocialWallet
     end
 
     def ___check(address: '')
-      conn = Faraday.new(url: api_endpoint + '/' + path)
+      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
       response = conn.post do |req|
         req.headers['Content-Type'] = 'application/json'
         request_data[:address] = address

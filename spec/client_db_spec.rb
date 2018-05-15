@@ -4,8 +4,8 @@ describe 'SocialWallet::Client on DB' do
   let(:account_id) { 'pietro' }
   let(:another_account_id) { 'paolo' }
   let(:to_id) { 'aaron' }
-  let(:amount) { 10 }
-  let(:tags) { %w[tag1 tag2] }
+  let(:amount) { 10.0 }
+  let(:tags) { %w[tag_1 tag_2] }
   let(:blockchain) { 'mongo' }
   subject(:client) {
     SocialWallet::Client.new(
@@ -42,9 +42,8 @@ describe 'SocialWallet::Client on DB' do
       end
       it 'contains the correct data' do
         element = @list['tags'].select { |element| element['tag'] == tags.first }.first
-        binding.pry
         expect(element['tag']).to eq(tags.first)
-        expect(element['count']).to be > 1
+        expect(element['count']).to be >= 1
         expect(element['amount']).to be >= amount
         expect(element['created-by']).to eq(account_id)
       end
@@ -97,7 +96,7 @@ describe 'SocialWallet::Client on DB' do
     # end
 
     context '#new' do
-      it "perform a new transaction on the DB from one account to another account" do
+      it 'perform a new transaction on the DB from one account to another account' do
         resp = client.transactions.new(
           from_id: account_id, to_id: to_id, amount: amount, tags: tags
         )
@@ -123,6 +122,8 @@ describe 'SocialWallet::Client on DB' do
           'from-id'        => account_id,
           'to-id'          => to_id,
           'amount'         => amount,
+          'amount-text'    => BigDecimal.new(amount, 16).to_s('F'),
+          # 'amount-text'    => amount.to_s,
           'tags'           => tags,
           'transaction-id' => @transaction_id,
           'currency'       => @label
