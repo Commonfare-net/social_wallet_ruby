@@ -60,10 +60,11 @@ describe 'SocialWallet::Client on DB' do
         @list = client.transactions(account_id: account_id).list
       end
       it 'retrieve the list of transactions' do
-        expect(@list).to be_a(Array)
+        expect(@list).to be_a(Hash)
       end
       it 'contains the correct data' do
-        element = @list.select { |element| element['transaction-id'] == @transaction_id }.first
+        expect(@list['total-count']).to be >= 1
+        element = @list['transactions'].select { |element| element['transaction-id'] == @transaction_id }.first
         expect(element['from-id']).to eq(account_id)
         expect(element['to-id']).to eq(to_id)
         expect(element['amount']).to eq(amount)

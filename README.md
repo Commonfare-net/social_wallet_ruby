@@ -62,13 +62,39 @@ client.transactions.new(from_id: 'paolo', to_id: 'aaron', amount: 10, tags: ['ta
 Retrieve the list of the transactions of a specific account.
 
 ```ruby
-client.transactions(account_id: 'pietro').list
+client.transactions(account_id: 'pietro', count: 0, from: 0, page: 0, per_page: 0, currency: 'MONGO').list
 ```
 
-Retrieve the list of the transactions of the default account.
+To retrieve the list of the transactions of the default account use `account_id: ''`
+
+##### Optional parameters
+
+* **Paginated results**: for *database* transactions use `:page` and `:per_page` (defaults: `page: 1`, `per_page: 10`. Use `0` for ALL), for *blockchain* transactions use `:count` and `:from`.
+
+* **Filter by currency**: another optional parameter for *database* transactions is `:currency`, to filter transactions only by one currency.
+
+**Response**
+
+The list of transaction is always paginated to avoid overload on the server.
 
 ```ruby
-client.transactions(account_id: '').list
+{
+  'total-count'=>42,
+  'transactions'=>[
+    {
+      'tags'=>['tag1', 'tag2'],
+      'timestamp'=>'2018-02-23T20:10:01.331',
+      'from-id'=>'pietro',
+      'to-id'=>'aaron',
+      'amount'=>10,
+      'amount-text'=>'10.0',
+      'transaction-id'=>'xqc4cvhr...pCPfju5inCO',
+      'currency'=>'MONGO'
+    },
+    {
+      ...
+    }]
+}
 ```
 
 **IMPORTANT**: the format of the response varies according to the backend used (e.g. `faircoin` or `mongo`). See the [Get](#transactions-get) for details.

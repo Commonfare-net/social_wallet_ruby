@@ -25,8 +25,20 @@ module SocialWallet
 
     protected
 
-    def ___transactions(account_id: nil)
+    def ___transactions(
+      account_id: nil,
+      count:      nil,
+      from:       nil,
+      page:       nil,
+      per_page:   nil,
+      currency:   nil
+    )
       @account_id = account_id
+      @count = count
+      @from = from
+      @page = page
+      @per_page = per_page
+      @currency = currency
       self
     end
 
@@ -135,7 +147,14 @@ module SocialWallet
       conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
       response = conn.post do |req|
         req.headers['Content-Type'] = 'application/json'
-        request_data['account-id'] = @account_id if @path_parts.include?('transactions')
+        if @path_parts.include?('transactions')
+          request_data['account-id'] = @account_id
+          request_data['count'] = @count unless @count.nil?
+          request_data['from'] = @from unless @from.nil?
+          request_data['page'] = @page unless @page.nil?
+          request_data['per-page'] = @per_page unless @per_page.nil?
+          request_data['currency'] = @currency unless @currency.nil?
+        end
         req.body = MultiJson.dump(request_data)
       end
       format_response(response)
