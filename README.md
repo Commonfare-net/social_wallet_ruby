@@ -20,6 +20,10 @@ Or install it yourself as:
 
 ## Usage
 
+### ⚠️ Version compatibility ⚠️
+
+If you use [Social Wallet API](https://github.com/Commonfare-net/social-wallet-api) version ≤ 0.10.x you must use [v1.0.3 of this gem](https://github.com/Commonfare-net/social_wallet_ruby/tree/5fe6ee36f3055de165540f49eb03e54ea9fc268d).
+
 ### Create the client
 
 The default client uses the *database* `mongo` as backend.
@@ -28,10 +32,11 @@ The default client uses the *database* `mongo` as backend.
 client = SocialWallet::Client.new(api_endpoint: 'http://example.com/wallet/v1')
 ```
 
-If you want to use the API on a *blockchain* just specify it like this:
+This constructor defaults to a client that uses `connection: 'mongo'` and `type: 'db-only'`.
+If you want to use the API on a different backend just specify it like this:
 
 ```ruby
-client = SocialWallet::Client.new(api_endpoint: 'http://example.com/wallet/v1', blockchain: 'faircoin')
+client = SocialWallet::Client.new(api_endpoint: 'http://example.com/wallet/v1', connection: 'faircoin', type: 'blockchain-and-db')
 ```
 
 ### List of tags
@@ -62,7 +67,7 @@ client.transactions.new(from_id: 'paolo', to_id: 'aaron', amount: 10, tags: ['ta
 Retrieve the list of the transactions of a specific account.
 
 ```ruby
-client.transactions(account_id: 'pietro', count: 0, from: 0, page: 0, per_page: 0, currency: 'MONGO').list
+client.transactions(account_id: 'pietro', count: 0, from: 0, page: 0, per_page: 0, currency: 'Commoncoin').list(from_datetime: Time.now - 3600, to_datetime: Time.now)
 ```
 
 To retrieve the list of the transactions of the default account use `account_id: ''`
@@ -73,9 +78,11 @@ To retrieve the list of the transactions of the default account use `account_id:
 
 * **Filter by currency**: another optional parameter for *database* transactions is `:currency`, to filter transactions only by one currency.
 
+* **Filter by dates**: use `from_datetime` and `to_datetime`.
+
 **Response**
 
-The list of transaction is always paginated to avoid overload on the server.
+The list of transactions is always paginated to avoid overload on the server.
 
 ```ruby
 {
@@ -89,7 +96,8 @@ The list of transaction is always paginated to avoid overload on the server.
       'amount'=>10,
       'amount-text'=>'10.0',
       'transaction-id'=>'xqc4cvhr...pCPfju5inCO',
-      'currency'=>'MONGO'
+      'currency'=>'Commoncoin'
+      'description'=>'...'
     },
     {
       ...
@@ -126,7 +134,7 @@ client.transactions.get transaction_id: 'xqc4cvhr...pCPfju5inCO'
   'amount'=>10,
   'amount-text'=>'10.0',
   'transaction-id'=>'xqc4cvhr...pCPfju5inCO',
-  'currency'=>'MONGO'
+  'currency'=>'Commoncoin'
 }
 ```
 
@@ -188,7 +196,7 @@ Retrieve the label of the currency for the client's backend
 
 ```ruby
 client.label
-#=> { 'currency' => 'MONGO' }
+#=> { 'currency' => 'Commoncoin' }
 ```
 
 ### Address

@@ -1,13 +1,20 @@
 module SocialWallet
   class Client
-    attr_accessor :api_endpoint, :blockchain, :request_data
+    attr_accessor :api_endpoint, :blockchain, :request_data, :connection, :type
 
     SW_ERROR_STATUSES = [404, 503].freeze
 
-    def initialize(api_endpoint: nil, blockchain: 'mongo')
+    def initialize(
+      api_endpoint: nil,
+      blockchain: 'mongo',
+      connection: 'mongo',
+      type: 'db-only'
+    )
       @api_endpoint = api_endpoint
-      @blockchain = blockchain
-      @request_data = { blockchain: blockchain }
+      @blockchain = blockchain # NOTE: here for backward compatibility
+      @connection = connection
+      @type = type
+      @request_data = { connection: connection, type: type }
       @path_parts = []
     end
 
@@ -55,9 +62,9 @@ module SocialWallet
     end
 
     def ___balance(account_id: nil)
-      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
+      conn = Faraday.new(connection_params)
       response = conn.post do |req|
-        req.headers['Content-Type'] = 'application/json'
+        req.headers.merge!(headers)
         request_data['account-id'] = account_id if account_id
         req.body = MultiJson.dump(request_data)
       end
@@ -67,9 +74,9 @@ module SocialWallet
     end
 
     def ___label
-      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
+      conn = Faraday.new(connection_params)
       response = conn.post do |req|
-        req.headers['Content-Type'] = 'application/json'
+        req.headers.merge!(headers)
         req.body = MultiJson.dump(request_data)
       end
       format_response(response)
@@ -78,9 +85,9 @@ module SocialWallet
     end
 
     def ___address(account_id: '')
-      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
+      conn = Faraday.new(connection_params)
       response = conn.post do |req|
-        req.headers['Content-Type'] = 'application/json'
+        req.headers.merge!(headers)
         request_data['account-id'] = account_id
         req.body = MultiJson.dump(request_data)
       end
@@ -88,22 +95,6 @@ module SocialWallet
     ensure
       reset
     end
-
-    # def move(from_id: nil, to_id: nil, amount: 0, tags: [])
-    #   @path_parts << 'move'
-    #   conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
-    #   response = conn.post do |req|
-    #     req.headers['Content-Type'] = 'application/json'
-    #     request_data['from-id'] = (from_id ||= @account_id)
-    #     request_data['to-id'] = to_id
-    #     request_data[:amount] = amount
-    #     request_data[:tags] = tags
-    #     req.body = MultiJson.dump(request_data)
-    #   end
-    #   format_response(response)
-    # ensure
-    #   reset
-    # end
 
     def ___new(
       from_id:             nil,
@@ -114,11 +105,12 @@ module SocialWallet
       to_address:          '',
       comment:             '',
       comment_to:          '',
+      description:         '',
       tags:                []
     )
-      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
+      conn = Faraday.new(connection_params)
       response = conn.post do |req|
-        req.headers['Content-Type'] = 'application/json'
+        req.headers.merge!(headers)
         # From SWAPI v0.9.3 amount is a String
         request_data[:amount] = BigDecimal.new(amount, 16).to_s('F')
         request_data[:tags] = tags
@@ -135,6 +127,7 @@ module SocialWallet
         elsif @path_parts.include? 'transactions'
           request_data['from-id'] = from_id
           request_data['to-id'] = to_id
+          request_data['description'] = description
         end
         req.body = MultiJson.dump(request_data)
       end
@@ -143,10 +136,15 @@ module SocialWallet
       reset
     end
 
-    def ___list
-      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
+    def ___list(
+      from_datetime: nil,
+      to_datetime:   nil,
+      description:   nil,
+      tags:          nil
+    )
+      conn = Faraday.new(connection_params)
       response = conn.post do |req|
-        req.headers['Content-Type'] = 'application/json'
+        req.headers.merge!(headers)
         if @path_parts.include?('transactions')
           request_data['account-id'] = @account_id
           request_data['count'] = @count unless @count.nil?
@@ -154,6 +152,10 @@ module SocialWallet
           request_data['page'] = @page unless @page.nil?
           request_data['per-page'] = @per_page unless @per_page.nil?
           request_data['currency'] = @currency unless @currency.nil?
+          request_data['from-datetime'] = from_datetime.iso8601 if from_datetime.is_a? Time
+          request_data['to-datetime'] = to_datetime.iso8601 if to_datetime.is_a? Time
+          request_data['description'] = description unless description.nil?
+          request_data['tags'] = tags unless tags.nil?
         end
         req.body = MultiJson.dump(request_data)
       end
@@ -163,9 +165,9 @@ module SocialWallet
     end
 
     def ___get(transaction_id: nil)
-      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
+      conn = Faraday.new(connection_params)
       response = conn.post do |req|
-        req.headers['Content-Type'] = 'application/json'
+        req.headers.merge!(headers)
         request_data[:txid] = transaction_id
         req.body = MultiJson.dump(request_data)
       end
@@ -175,9 +177,9 @@ module SocialWallet
     end
 
     def ___check(address: '')
-      conn = Faraday.new(url: api_endpoint + '/' + path, ssl: { version: 'TLSv1_2' })
+      conn = Faraday.new(connection_params)
       response = conn.post do |req|
-        req.headers['Content-Type'] = 'application/json'
+        req.headers.merge!(headers)
         request_data[:address] = address
         req.body = MultiJson.dump(request_data)
       end
@@ -206,7 +208,7 @@ module SocialWallet
 
     def reset
       @path_parts = []
-      @request_data = { blockchain: blockchain }
+      @request_data = { connection: connection, type: type }
     end
 
     def format_response(response)
@@ -218,6 +220,20 @@ module SocialWallet
       else
         raise SocialWallet::Error.new("API Error: #{response.body}")
       end
+    end
+
+    def connection_params
+      {
+        url: api_endpoint + '/' + path,
+        ssl: { version: 'TLSv1_2' }
+      }
+    end
+
+    def headers
+      {
+        'Content-Type' => 'application/json',
+        # 'x-api-key'    => ENV['SOCIAL_WALLET_API_KEY']
+      }
     end
   end
 end

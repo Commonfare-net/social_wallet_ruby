@@ -6,6 +6,7 @@ describe 'SocialWallet::Client on DB' do
   let(:to_id) { 'aaron' }
   let(:amount) { 10.0 }
   let(:tags) { %w[tag_1 tag_2] }
+  let(:description) { "Test description #{Time.now}" }
   let(:blockchain) { 'mongo' }
   subject(:client) {
     SocialWallet::Client.new(
@@ -25,7 +26,7 @@ describe 'SocialWallet::Client on DB' do
   context '#label' do
     it 'retrieve the label of the blockchain' do
       resp = client.label
-      expect(resp['currency']).to eq(blockchain.upcase)
+      expect(resp['currency']).to be_a(String)
     end
   end
 
@@ -37,10 +38,8 @@ describe 'SocialWallet::Client on DB' do
       @list = client.tags.list
     end
     context '#list' do
-      it 'retrieve the list of tags' do
+      it 'retrieve the list of tags and contains the correct data' do
         expect(@list['tags']).to be_a(Array)
-      end
-      it 'contains the correct data' do
         element = @list['tags'].select { |element| element['tag'] == tags.first }.first
         expect(element['tag']).to eq(tags.first)
         expect(element['count']).to be >= 1
@@ -54,68 +53,62 @@ describe 'SocialWallet::Client on DB' do
     context '#list' do
       before do
         resp = client.transactions.new(
-          from_id: account_id, to_id: to_id, amount: amount, tags: tags
+          from_id: account_id, to_id: to_id, amount: amount, tags: tags,
+          description: description
         )
         @transaction_id = resp['transaction-id']
-        @list = client.transactions(account_id: account_id).list
+        @timestamp = resp['timestamp']
+        sleep 1 # needed to be sure that time passes...
+        @list = client.transactions(account_id: account_id).list(
+          from_datetime: Time.now - 3600,
+          to_datetime:   Time.now,
+          # description:   description, # not really implemented yet
+          tags:          tags
+        )
+        @currency = client.label['currency']
       end
-      it 'retrieve the list of transactions' do
+      it 'retrieve the list of transactions and contains the correct data' do
         expect(@list).to be_a(Hash)
-      end
-      it 'contains the correct data' do
         expect(@list['total-count']).to be >= 1
         element = @list['transactions'].select { |element| element['transaction-id'] == @transaction_id }.first
         expect(element['from-id']).to eq(account_id)
         expect(element['to-id']).to eq(to_id)
         expect(element['amount']).to eq(amount)
         expect(element['tags']).to eq(tags)
+        expect(element['timestamp']).to eq(@timestamp)
+        # expect(element['currency']).to eq(@currency)
       end
     end
 
-    # context '#move' do
-    #   it "move some amount from the requester's account to another account" do
-    #     resp = client.transactions(account_id).move(
-    #       to_id: to_id, amount: amount, tags: tags
-    #     )
-    #     expect(resp['from-id']).to eq(account_id)
-    #     expect(resp['to-id']).to eq(to_id)
-    #     expect(resp['amount']).to eq(amount)
-    #     expect(resp['tags']).to eq(tags)
-    #     expect(resp['transaction-id']).not_to be_nil
-    #   end
-    #
-    #   it 'move some amount from one account to another account' do
-    #     resp = client.transactions(account_id).move(
-    #       from_id: another_account_id, to_id: to_id, amount: amount, tags: tags
-    #     )
-    #     expect(resp['from-id']).to eq(another_account_id)
-    #     expect(resp['to-id']).to eq(to_id)
-    #     expect(resp['amount']).to eq(amount)
-    #     expect(resp['tags']).to eq(tags)
-    #     expect(resp['transaction-id']).not_to be_nil
-    #   end
-    # end
-
     context '#new' do
+      before do
+        @currency = client.label['currency']
+      end
       it 'perform a new transaction on the DB from one account to another account' do
         resp = client.transactions.new(
-          from_id: account_id, to_id: to_id, amount: amount, tags: tags
+          from_id: account_id, to_id: to_id, amount: amount, tags: tags,
+          description: description
         )
         expect(resp['from-id']).to eq(account_id)
         expect(resp['to-id']).to eq(to_id)
         expect(resp['amount']).to eq(amount)
+        expect(resp['description']).to eq(description)
         expect(resp['tags']).to eq(tags)
         expect(resp['transaction-id']).not_to be_nil
+        expect { Time.parse(resp['timestamp']) }.to_not raise_error
+        # expect(resp['currency']).to eq(@currency)
       end
     end
 
     context '#get' do
       before do
         resp = client.transactions.new(
-          from_id: account_id, to_id: to_id, amount: amount, tags: tags
+          from_id: account_id, to_id: to_id, amount: amount, tags: tags,
+          description: description
         )
         @transaction_id = resp['transaction-id']
-        @label = client.label['currency']
+        @timestamp = resp['timestamp']
+        @currency = client.label['currency']
       end
       it 'retrieve info on a transaction' do
         resp = client.transactions.get(transaction_id: @transaction_id)
@@ -125,9 +118,11 @@ describe 'SocialWallet::Client on DB' do
           'amount'         => amount,
           'amount-text'    => BigDecimal.new(amount, 16).to_s('F'),
           # 'amount-text'    => amount.to_s,
+          'description'    => description,
           'tags'           => tags,
           'transaction-id' => @transaction_id,
-          'currency'       => @label
+          'timestamp'      => @timestamp,
+          # 'currency'       => @currency
         )
       end
     end
