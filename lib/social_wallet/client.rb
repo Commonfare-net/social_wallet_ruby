@@ -1,16 +1,18 @@
 module SocialWallet
   class Client
-    attr_accessor :api_endpoint, :blockchain, :request_data, :connection, :type
+    attr_accessor :api_endpoint, :api_key, :blockchain, :request_data, :connection, :type
 
     SW_ERROR_STATUSES = [404, 503].freeze
 
     def initialize(
       api_endpoint: nil,
+      api_key: '',
       blockchain: 'mongo',
       connection: 'mongo',
       type: 'db-only'
     )
       @api_endpoint = api_endpoint
+      @api_key = api_key
       @blockchain = blockchain # NOTE: here for backward compatibility
       @connection = connection
       @type = type
@@ -232,7 +234,7 @@ module SocialWallet
     def headers
       {
         'Content-Type' => 'application/json',
-        # 'x-api-key'    => ENV['SOCIAL_WALLET_API_KEY']
+        'x-api-key'    => api_key
       }
     end
   end

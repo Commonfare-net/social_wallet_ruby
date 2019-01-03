@@ -22,21 +22,27 @@ Or install it yourself as:
 
 ### ⚠️ Version compatibility ⚠️
 
+If you use [Social Wallet API](https://github.com/Commonfare-net/social-wallet-api) version 1.0 you must use [v1.1.0 of this gem](https://github.com/Commonfare-net/social_wallet_ruby/tree/d65c45e0aaca07cdf3a3affc483bb38d3dbef1c0).
+
 If you use [Social Wallet API](https://github.com/Commonfare-net/social-wallet-api) version ≤ 0.10.x you must use [v1.0.3 of this gem](https://github.com/Commonfare-net/social_wallet_ruby/tree/5fe6ee36f3055de165540f49eb03e54ea9fc268d).
+
+### Get the API KEY
+
+See [this guide](https://github.com/Commonfare-net/social-wallet-api/blob/master/APIKEY.md) for obtaining your API key.
 
 ### Create the client
 
 The default client uses the *database* `mongo` as backend.
 
 ```ruby
-client = SocialWallet::Client.new(api_endpoint: 'http://example.com/wallet/v1')
+client = SocialWallet::Client.new(api_endpoint: 'http://example.com/wallet/v1', api_key: 'YOUR_API_KEY')
 ```
 
 This constructor defaults to a client that uses `connection: 'mongo'` and `type: 'db-only'`.
 If you want to use the API on a different backend just specify it like this:
 
 ```ruby
-client = SocialWallet::Client.new(api_endpoint: 'http://example.com/wallet/v1', connection: 'faircoin', type: 'blockchain-and-db')
+client = SocialWallet::Client.new(api_endpoint: 'http://example.com/wallet/v1', api_key: 'YOUR_API_KEY', connection: 'faircoin', type: 'blockchain-and-db')
 ```
 
 ### List of tags

@@ -10,7 +10,8 @@ describe 'SocialWallet::Client on DB' do
   let(:blockchain) { 'mongo' }
   subject(:client) {
     SocialWallet::Client.new(
-      api_endpoint: ENV['TEST_API_ENDPOINT']
+      api_endpoint: ENV['TEST_API_ENDPOINT'],
+      api_key:      ENV['TEST_API_KEY']
     )
   }
 
@@ -61,7 +62,7 @@ describe 'SocialWallet::Client on DB' do
         sleep 1 # needed to be sure that time passes...
         @list = client.transactions(account_id: account_id).list(
           from_datetime: Time.now - 3600,
-          to_datetime:   Time.now,
+          to_datetime:   Time.now, # not using it means up to now
           # description:   description, # not really implemented yet
           tags:          tags
         )
@@ -76,7 +77,7 @@ describe 'SocialWallet::Client on DB' do
         expect(element['amount']).to eq(amount)
         expect(element['tags']).to eq(tags)
         expect(element['timestamp']).to eq(@timestamp)
-        # expect(element['currency']).to eq(@currency)
+        expect(element['currency']).to eq(@currency)
       end
     end
 
@@ -96,7 +97,7 @@ describe 'SocialWallet::Client on DB' do
         expect(resp['tags']).to eq(tags)
         expect(resp['transaction-id']).not_to be_nil
         expect { Time.parse(resp['timestamp']) }.to_not raise_error
-        # expect(resp['currency']).to eq(@currency)
+        expect(resp['currency']).to eq(@currency)
       end
     end
 
@@ -122,7 +123,7 @@ describe 'SocialWallet::Client on DB' do
           'tags'           => tags,
           'transaction-id' => @transaction_id,
           'timestamp'      => @timestamp,
-          # 'currency'       => @currency
+          'currency'       => @currency
         )
       end
     end
